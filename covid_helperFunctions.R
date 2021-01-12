@@ -44,13 +44,13 @@ fh_getLatestData <- function(indicator, dayTolerance = 10){
   # get the latest data for one indicator by country
   # it can handle cases when the latest data point is not at the latest date
   dataSet <- countryData %>%
-    select("date", "country", indicator) %>%
+    select("date", "continent", "country", indicator) %>%
     filter(!is.na(get(indicator))) %>%
     group_by(country) %>%
     filter(date == max(date))%>%
     ungroup() %>%
     filter(date >= lastUpdate-1-dayTolerance) %>%
-    select("country", indicator)
+    select("continent", "country", indicator)
   return(dataSet)
 }
 

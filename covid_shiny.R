@@ -7,6 +7,8 @@ ui <- fluidPage(
                sidebarPanel(
                  fluidRow(h4("Chart controls")),
                  hr(),
+                 selectInput("continent_wmap", h5("Select region"), 
+                             choices = continentList, selected = "World"),
                  selectInput("indic_wmap", h5("Select indicator"), 
                              choices = indic_list, selected = "total_deaths_per_million")
                ),
@@ -51,6 +53,8 @@ ui <- fluidPage(
                 sidebarPanel(
                   fluidRow(h4("Chart controls")),
                   hr(),
+                  selectInput("continent_bar", h5("Select region"), 
+                              choices = continentList, selected = "World"),
                   selectInput("indic_bar", h5("Select indicator"), 
                               choices = indic_list, selected = "total_deaths_per_million"),
                   sliderInput("slid_bar", h5("Countries displayed"),
@@ -69,6 +73,9 @@ ui <- fluidPage(
                fluidRow(h5("Data Source: Our World in Data"))
                ),
               tabPanel("Changelog",
+               fluidRow(h4("v0.7 beta")),
+               fluidRow(h5("Regions can be selected on the world map.")),
+               fluidRow(h5("Regions can be selected on the bar chart.")),       
                fluidRow(h4("v0.5 beta")),
                fluidRow(h5("Initial release: please note that not all functions may work properly."))
               )
@@ -82,7 +89,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   # worldmap
   output$wmap <- renderPlot({
-    f_worldMapChart(indicator=input$indic_wmap)
+    f_worldMapChart(indicator=input$indic_wmap, continentName = input$continent_wmap)
   })
   
   # country page
@@ -100,7 +107,8 @@ server <- function(input, output, session) {
   
   # barcharts
   output$bar <- renderPlot({
-    f_barChart(indicator = input$indic_bar, countryNumber = input$slid_bar)
+    f_barChart(continentName = input$continent_bar, indicator = input$indic_bar, 
+               countryNumber = input$slid_bar)
   })
   
 }

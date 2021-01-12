@@ -22,12 +22,19 @@ countryData <- rawData %>%
   mutate(date = as.Date(as.character(date), tryFormats = c("%Y-%m-%d")),
          new_tests_smoothed_per_million = new_tests_smoothed_per_thousand*1000)
 
-
-# load data for world map charts
-world_map <- ggplot2::map_data('world')
+# last updated
+lastUpdate = max(countryData$date)
+lastData = lastUpdate-1
 
 # load country name mapping for world map data
 countryNameMappingWorld = read.csv("countryWorldMapper.csv", sep = ";")
+
+
+world_map_continents <- map_data('world') %>%
+  left_join(countryNameMappingWorld, by = ("region")) %>%
+  left_join(fh_getLatestData("total_cases"), by = "country") %>%
+  select(region, country, continent)
+
 
 
 
@@ -53,8 +60,8 @@ indic_list <- as.list(setNames(indicatorNames$indic, indicatorNames$realName))
 # country list
 countryList <- unique(countryData$country)
 
-# last updated
-lastUpdate = max(countryData$date)
-lastData = lastUpdate-1
+# continent list
+continentList <- append(unique(countryData$continent), "World")
+
 
 

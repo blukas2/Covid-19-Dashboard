@@ -11,19 +11,25 @@ styleConfig <- data.frame(
 styleConfig <- as.list(setNames(styleConfig$styleValue,styleConfig$styleElement))
 
 
-
-
-
 #############
 # world map #
 #############
 
-f_worldMapChart <- function(indicator = "total_deaths_per_million"){
-  # get data
-  world_data <- world_map %>%
-    left_join(countryNameMappingWorld, by = ("region")) %>%
-    left_join(fh_getLatestData(indicator), by = "country")
+f_worldMapChart <- function(indicator = "total_deaths_per_million", continentName = "World"){
   
+  if (continentName == "World"){
+    world_data <- map_data('world') %>%
+      left_join(countryNameMappingWorld, by = ("region")) %>%
+      left_join(fh_getLatestData(indicator), by = "country")
+  } else {
+    selected_countries <- world_map_continents %>%
+      filter(continent == continentName)
+    selected_countries <- unique(selected_countries$region)
+    
+    world_data <- map_data('world', region = selected_countries) %>%
+      left_join(countryNameMappingWorld, by = ("region")) %>%
+      left_join(fh_getLatestData(indicator), by = "country")
+  }
   
   # set theme
   my_theme <- function () { 
@@ -53,15 +59,24 @@ f_worldMapChart <- function(indicator = "total_deaths_per_million"){
                       round(indic_max/4*2, digits = rounding_factor),
                       round(indic_max/4*3, digits = rounding_factor))
   
+  # limits
+  xMin = ifelse(continentName == "Oceania", 100, min(world_data$long, na.rm = TRUE))
+  xMax = ifelse(continentName == "Europe", 50, 
+                ifelse(continentName == "North America", -40 ,max(world_data$long, na.rm = TRUE)))
   
+  yMin = ifelse(continentName == "World", -60,
+                ifelse(continentName == "Africa", -35, min(world_data$lat, na.rm = TRUE)))
+  yMax = ifelse(continentName == "Europe", 72, max(world_data$lat, na.rm = TRUE))
+  
+  # the plot
   plot <- ggplot() + 
     geom_polygon_interactive(data = world_data, color = 'gray70', size = 0.1,
                              aes(x = long, y = lat, fill = get(indicator), group = group, 
                                  tooltip = sprintf("%s<br/>%s", country, get(indicator)))) + 
     scale_fill_gradient(name = nameLegend, low = "white", high = colorscheme, na.value = 'white',
                         labels = colorbar_labels, breaks = colorbar_labels) + 
-    scale_y_continuous(limits = c(-60, 90), breaks = c()) + 
-    scale_x_continuous(breaks = c()) + 
+    scale_x_continuous(limits = c(xMin, xMax), breaks = c()) + 
+    scale_y_continuous(limits = c(yMin, yMax), breaks = c()) + 
     coord_fixed(1.3) +
     xlab(NULL) +
     ylab(NULL) +
@@ -165,16 +180,20 @@ f_compareChart <- function(countryList, indicator = "total_deaths_per_million", 
 }
 
 
-f_barChart <- function(countryList = "all", indicator = "total_deaths_per_million", countryNumber = 20){
+f_barChart <- function(continentName = "World", indicator = "total_deaths_per_million", countryNumber = 20){
   # shows the top n countries along a custom indicator
   # countryList: "all" - all countries; or a character vector of selected countries -not implemented yet
   
-  if (countryList == "all") {
-    # drop city-states
-    countryList <- countryData %>%
-      filter(population>100000)
-    countryList = unique(countryList$country)
-    }
+  # drop city-states
+  countryList <- countryData %>%
+    filter(population>100000)  
+  
+  if (continentName != "World") {
+    countryList <- countryList %>%
+      filter(continent==continentName)
+  }
+  countryList = unique(countryList$country)
+  
   
   inputData <- fh_getLatestData(indicator) %>%
     filter(country %in% countryList) %>%
@@ -199,4 +218,3 @@ f_barChart <- function(countryList = "all", indicator = "total_deaths_per_millio
   return(plot)
   
 }
-
