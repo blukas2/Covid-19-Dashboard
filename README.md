@@ -1,9 +1,15 @@
 # Covid-19-Dashboard
-A dashboard using Shiny to visualize coronavirus data from Our World in Data  
+This is a ShinyApp to visualize the Covid-19 data from Our World in Data.
 
-This is a ShinyApp to visualize the Covid-19 data from Our World in Data. It is currently a very early version with some features missing or may not work properly, but new updates are coming soon! 
+## Charts And Functions
 
+World Map: A global map which can show a variety of indicators at the latest available date. It is also possible to zoom in by selecting regions.
 
+Country Page: Two charts which show the daily new cases, daily new deaths and daily tests per million people and the positive rate. All indicators are 7-day moving averages. The date range can also be specified.
+
+Compare Countries: The chart shows a single indicator for a custom selection of countries. Maximum eight countries can be selected at once. The date range can also be specified.
+
+Barcharts: A chart which can show a variety of indicators at the latest available date, ranked from largest to smallest. The number of countries can also be specified, and it is possible to filter for regions.
 
 
 ## Instructions:
