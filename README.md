@@ -1,5 +1,5 @@
 # Covid-19-Dashboard
-This is a ShinyApp to visualize the Covid-19 data from Our World in Data.
+This is a ShinyApp to visualize Covid-19 data from Our World in Data.
 
 ## Charts And Functions
 
