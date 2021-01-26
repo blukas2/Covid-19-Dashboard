@@ -4,11 +4,33 @@
 # named list containing style elements
 styleConfig <- data.frame(
   "styleElement" = c("chartLineSize", "chartAxisYFontSize", "chartAxisXFontSize",
-                     "chartTitleSize", "barAxisYFontSize", "barAxisXFontSize"),
+                     "chartTitleSize", "barAxisYFontSize", "barAxisXFontSize",
+                     "chartLegendTextSize"),
   "styleValue" = c(1, 12, 12,
-                   14, 12, 12) 
+                   14, 12, 12,
+                   12) 
 )
 styleConfig <- as.list(setNames(styleConfig$styleValue,styleConfig$styleElement))
+
+################
+# dummy charts #
+################
+
+dummy_data <- as.data.frame(0)
+
+# for normal charts: not available
+NA_dummyChart <- ggplot(data=dummy_data, aes(ymin = -1, ymax = 1, xmin = -1, xmax = 1)) +
+  theme_void() +
+  geom_rect(aes(ymin = -1, ymax = 1, xmin = -1, xmax = 1), fill ="#ececec") +
+  geom_text(aes(x=0, y=0, label="Not available"), size=8, color = "#919191")
+
+
+# for normal charts: not available
+selectCountry_dummyChart <- ggplot(data=dummy_data, aes(ymin = -1, ymax = 1, xmin = -1, xmax = 1)) +
+  theme_void() +
+  geom_rect(aes(ymin = -1, ymax = 1, xmin = -1, xmax = 1), fill ="#ececec") +
+  geom_text(aes(x=0, y=0, label="Select a country!"), size=8, color = "#919191")
+
 
 
 #############
@@ -91,12 +113,18 @@ f_worldMapChart <- function(indicator = "total_deaths_per_million", continentNam
 # COUNTRY PAGE #
 ################
 
-f_basicChart <- function(countryName, startDate = "2020-03-01"){
+f_basicChart <- function(countryName, startDate = "2020-03-01", endDate = NA){
   # shows daily new cases and deaths per million people (7-day movav)
   inputData <- countryData %>%
     filter(country == countryName,
            date >= as.Date(startDate)) %>%
     select(date, new_cases_smoothed_per_million, new_deaths_smoothed_per_million)
+  
+  if (!is.na(endDate)){
+    inputData <- inputData %>%
+      filter(date <= as.Date(endDate))
+  }
+  
   scaleRatio = max(inputData$new_cases_smoothed_per_million, na.rm = TRUE)/max(inputData$new_deaths_smoothed_per_million, na.rm = TRUE)
   
   plot <- ggplot(data = inputData, aes(x=date)) +
@@ -105,7 +133,7 @@ f_basicChart <- function(countryName, startDate = "2020-03-01"){
     geom_line(aes(y=new_deaths_smoothed_per_million*scaleRatio), 
               color = "black", size = as.numeric(styleConfig[["chartLineSize"]])) +
     scale_y_continuous(limits = c(0, NA), sec.axis = sec_axis(~./scaleRatio, name = "")) +
-    scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+    #scale_x_date(date_breaks = "1 month", date_labels = "%b") +
     xlab("") +
     ylab("") +
     ggtitle("Daily new cases per million (red) & new deaths (black)") +
@@ -113,16 +141,29 @@ f_basicChart <- function(countryName, startDate = "2020-03-01"){
           axis.text.x = element_text(size=as.numeric(styleConfig[["chartAxisXFontSize"]])),
           axis.text.y = element_text(size=as.numeric(styleConfig[["chartAxisYFontSize"]]), color = "red"),
           axis.text.y.right = element_text(size=as.numeric(styleConfig[["chartAxisYFontSize"]]), color = "black"))
-  return(plot)
+  
+  if (is.na(countryName) | countryName == "") {
+    return(selectCountry_dummyChart)
+  } else if (nrow(inputData)==0) {
+    return(NA_dummyChart)
+  } else {
+    return(plot)
+  } 
 }
 
 
-f_testCountryChart <- function(countryName){
+f_testCountryChart <- function(countryName, startDate = "2020-03-01", endDate = NA){
   # shows daily new tests per million people and daily positive rate (7-day movav)
   inputData <- countryData %>%
     filter(country == countryName,
-           positive_rate <= 1) %>%
+           positive_rate <= 1,
+           date >= as.Date(startDate)) %>%
     select(date, new_tests_smoothed_per_million, positive_rate)
+  
+  if (!is.na(endDate)){
+    inputData <- inputData %>%
+      filter(date <= as.Date(endDate))
+  }
   
   scaleRatio = max(inputData$new_tests_smoothed_per_million, na.rm = TRUE)/max(inputData$positive_rate, na.rm = TRUE)
   
@@ -137,12 +178,19 @@ f_testCountryChart <- function(countryName){
     xlab("") +
     ggtitle("Daily tests per million people (blue) & positive rate (red)") +
     scale_y_continuous(limits = c(0, NA) , sec.axis = sec_axis(~./scaleRatio, name = "", labels = percent)) +
-    scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+    #scale_x_date(date_breaks = "1 month", date_labels = "%b") +
     theme(title = element_text(size=as.numeric(styleConfig[["chartTitleSize"]])),
           axis.text.x = element_text(size=as.numeric(styleConfig[["chartAxisXFontSize"]])),
           axis.text.y = element_text(size=as.numeric(styleConfig[["chartAxisYFontSize"]]), color = "blue3"),
           axis.text.y.right = element_text(size=as.numeric(styleConfig[["chartAxisYFontSize"]]), color = "red"))
-  return(plot)
+
+    if (is.na(countryName) | countryName == "") {
+    return(selectCountry_dummyChart)
+  } else if (nrow(inputData)==0) {
+    return(NA_dummyChart)
+  } else {
+    return(plot)
+  } 
 }
 
 
@@ -150,34 +198,43 @@ f_testCountryChart <- function(countryName){
 # COMPARE COUNTRIES #
 #####################
 
-f_compareChart <- function(countryList, indicator = "total_deaths_per_million", startDate = "2020-03-01"){
+f_compareChart <- function(countryList, indicator = "total_deaths_per_million", 
+                           startDate = "2020-03-01", endDate = NA){
   # compare multiple countries along a custom metric
   inputData <- countryData %>%
     filter(country %in% countryList,
            date >= as.Date(startDate)) %>%
     select("date", "country", indicator)
   
+  if (!is.na(endDate)){
+    inputData <- inputData %>%
+      filter(date <= as.Date(endDate))
+  }
+  
   # fixed color palette so the coloring of countries would not change when the selection is modified
   color_palette <- hue_pal()(8)
   
   # indicator name translations - out of use
-  nameIndicator <- indicatorNames %>%
-    filter(indic == indicator)
-  nameIndicator = nameIndicator$realName[[1]]
+  #nameIndicator <- indicatorNames %>%
+  #  filter(indic == indicator)
+  #nameIndicator = nameIndicator$realName[[1]]
   
   plot <- ggplot(data = inputData, aes(x=date)) +
     geom_line(aes(y=get(indicator), color = country), size=as.numeric(styleConfig[["chartLineSize"]])) +
-    scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+    #scale_x_date(date_breaks = "1 month", date_labels = "%b") +
     scale_colour_manual("", 
                         values = color_palette[1:length(countryList)],
                         breaks = countryList) +
     xlab("") +
     ylab("") +
-  theme(axis.text.x = element_text(size=as.numeric(styleConfig[["chartAxisXFontSize"]])),
-        axis.text.y = element_text(size=as.numeric(styleConfig[["chartAxisYFontSize"]])))
+    theme(axis.text.x = element_text(size=as.numeric(styleConfig[["chartAxisXFontSize"]])),
+          axis.text.y = element_text(size=as.numeric(styleConfig[["chartAxisYFontSize"]])),
+          legend.text = element_text(size = as.numeric(styleConfig[["chartLegendTextSize"]])))
+  
   return(plot)
   
 }
+
 
 
 f_barChart <- function(continentName = "World", indicator = "total_deaths_per_million", countryNumber = 20){
