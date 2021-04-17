@@ -45,13 +45,13 @@ indicatorNames <- data.frame("indic" = c("total_cases", "total_deaths",
                                          "new_cases_smoothed", "new_deaths_smoothed", 
                                          "total_cases_per_million", "total_deaths_per_million", 
                                          "new_cases_smoothed_per_million", "new_deaths_smoothed_per_million",
-                                         "total_vaccinations_per_hundred"), 
+                                         "total_vaccinations_per_hundred", "new_vaccinations_smoothed_per_million"), 
                              "realName" = c("Confirmed cases", "Deaths", 
                                             "Daily new cases", "Daily deaths", 
                                             "Daily new cases (7-day movav)", "Daily deaths (7-day movav)",
                                             "Confirmed cases per 1M pop", "Deaths per 1M pop",
                                             "Daily new cases per 1M pop (7-day movav)", "Daily deaths per 1M pop (7-day movav)",
-                                            "Total vaccinations per 100 pop"
+                                            "Total vaccinations per 100 pop", "New vaccinations per 1M pop (7-day movav)"
                                             ))
 
 # convert to named list

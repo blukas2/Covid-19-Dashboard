@@ -8,7 +8,7 @@ fh_colorscheme <- function(indicator){
                           indicator %in% c("total_cases", "new_cases", "new_cases_smoothed", 
                                            "total_cases_per_million", "new_cases_smoothed_per_million") ~ "red4",
                           indicator %in% c("total_vaccinations", "new_vaccinations", "total_vaccinations_per_hundred",
-                                           "new_vaccinations_per_million") ~ "violetred4")
+                                           "new_vaccinations_per_million", "new_vaccinations_smoothed_per_million") ~ "violetred4")
   
   return(colorscheme)
 }
